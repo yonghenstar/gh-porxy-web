@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gh-proxy</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- AOS Animation Library -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#7209b7',
+                        accent: '#f72585',
+                        light: '#f8f9fa',
+                        dark: '#212529',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-effect {
+                @apply bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-xl border border-white border-opacity-20 shadow-glass;
+            }
+            .text-gradient {
+                @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+            }
+            .btn-primary {
+                @apply bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 shadow-lg;
+            }
+            .btn-secondary {
+                @apply bg-white hover:bg-gray-50 text-primary font-medium py-3 px-6 rounded-lg border border-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 shadow-md;
+            }
+            .input-primary {
+                @apply bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-lg border border-white border-opacity-30 px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 shadow-md;
+            }
+            .card {
+                @apply bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-xl border border-white border-opacity-20 shadow-lg p-6 transition-all duration-300 hover:shadow-xl;
+            }
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4cc9f0 0%, #f0c8e8 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .clip-path-slant {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+        
+        .notification {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="font-sans text-white">
+    <!-- Header -->
+    <header class="clip-path-slant bg-gradient-to-r from-primary to-secondary py-10 px-4 md:px-8">
+        <div class="container mx-auto text-center" data-aos="fade-down">
+            <div class="inline-block mb-4 float-animation">
+                <div class="w-16 h-16 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fa fa-link text-2xl text-white"></i>
+                </div>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Githubfiles-proxy</h1>
+            <p class="text-lg text-white opacity-90 max-w-md mx-auto">简单快速地为github文件代理，提升您的工作效率</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+        <!-- URL Input Section -->
+        <section class="max-w-2xl mx-auto" data-aos="fade-up" data-aos-duration="800">
+            <div class="card backdrop-blur-xl">
+                <h2 class="text-2xl font-bold mb-8 text-center text-gradient">输入Github文件URL</h2>
+                <form id="url-form" class="flex flex-col space-y-6">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa fa-link text-white opacity-70"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="original-url" 
+                            class="input-primary pl-12 text-gray-800" 
+                            placeholder="https://example.com/file.zip" 
+                            autocomplete="off"
+                        >
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button type="submit" class="btn-primary flex-1 flex items-center justify-center text-lg">
+                            <i class="fa fa-magic mr-2"></i> 生成链接
+                        </button>
+                        <button type="button" id="clear-btn" class="btn-secondary flex items-center justify-center text-lg">
+                            <i class="fa fa-trash mr-2"></i> 清空
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Result Area -->
+                <div id="result-area" class="mt-8 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-medium text-xl">生成的链接</h3>
+                        <span class="text-xs bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                            <i class="fa fa-check-circle mr-1"></i> 已生成
+                        </span>
+                    </div>
+                    <div class="flex">
+                        <input type="text" id="result-url" class="input-primary rounded-r-none flex-1 text-gray-800" readonly>
+                        <button id="copy-btn" class="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white px-6 py-3 rounded-r-lg transition-colors flex items-center justify-center">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <a id="open-link" target="_blank" class="text-white hover:text-white/80 text-sm flex items-center bg-white bg-opacity-10 px-3 py-1.5 rounded-lg transition-colors">
+                            <i class="fa fa-external-link mr-1"></i> 在新标签页打开
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Instructions Section -->
+        <section class="max-w-2xl mx-auto mt-10" data-aos="fade-up" data-aos-duration="800" data-aos-delay="200">
+            <div class="card bg-white bg-opacity-10 border border-white border-opacity-10 backdrop-blur-xl">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-info-circle text-white mr-2"></i> 使用说明
+                </h3>
+                <div class="space-y-3 text-gray-100">
+                    <p class="flex items-start">
+                        <span class="bg-white bg-opacity-20 rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">1</span>
+                        <span>在输入框中粘贴您想要处理的URL</span>
+                    </p>
+                    <p class="flex items-start">
+                        <span class="bg-white bg-opacity-20 rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">2</span>
+                        <span>点击"生成链接"按钮</span>
+                    </p>
+                    <p class="flex items-start">
+                        <span class="bg-white bg-opacity-20 rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">3</span>
+                        <span>系统会自动生成下载链接 <code class="bg-white bg-opacity-20 px-2 py-1 rounded text-white font-mono">cst.0n.pub/</code> 前缀</span>
+                    </p>
+                    <p class="flex items-start">
+                        <span class="bg-white bg-opacity-20 rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">4</span>
+                        <span>您可以复制生成的链接或直接在新标签页打开</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark bg-opacity-30 backdrop-blur-lg py-8 px-4 mt-16">
+        <div class="container mx-auto text-center">
+            <p class="text-white opacity-70">© 2025 CST协会. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- Notification Component -->
+    <div id="notification" class="notification fixed top-6 left-1/2 transform -translate-x-1/2 bg-white text-gray-800 px-6 py-3 rounded-lg shadow-xl flex items-center z-50">
+        <i id="notification-icon" class="fa fa-check-circle mr-2 text-green-500"></i>
+        <span id="notification-text">操作成功</span>
+    </div>
+
+    <script>
+        // Initialize AOS animation library
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                easing: 'ease-in-out',
+                once: true
+            });
+        });
+
+        // DOM Elements
+        const urlForm = document.getElementById('url-form');
+        const originalUrlInput = document.getElementById('original-url');
+        const resultArea = document.getElementById('result-area');
+        const resultUrlInput = document.getElementById('result-url');
+        const copyBtn = document.getElementById('copy-btn');
+        const openLink = document.getElementById('open-link');
+        const clearBtn = document.getElementById('clear-btn');
+        const notification = document.getElementById('notification');
+        const notificationIcon = document.getElementById('notification-icon');
+        const notificationText = document.getElementById('notification-text');
+        
+        // Configuration
+        const URL_PREFIX = 'gh-proxy.cstx.qzz.io/';
+        
+        // Event Listeners
+        urlForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            processUrl();
+        });
+        
+        clearBtn.addEventListener('click', function() {
+            originalUrlInput.value = '';
+            resultArea.classList.add('hidden');
+        });
+        
+        copyBtn.addEventListener('click', function() {
+            resultUrlInput.select();
+            document.execCommand('copy');
+            showNotification('链接已复制到剪贴板', 'success');
+        });
+        
+        // Process URL
+        function processUrl() {
+            const originalUrl = originalUrlInput.value.trim();
+            
+            if (!originalUrl) {
+                showNotification('请输入URL[带https://]', 'error');
+                return;
+            }
+            
+            try {
+                // Validate URL
+                new URL(originalUrl);
+                
+                // Process URL
+                let processedUrl = '';
+                
+                // Check if URL already has the prefix
+                if (originalUrl.includes(URL_PREFIX)) {
+                    processedUrl = originalUrl;
+                } else {
+                    // Add prefix to the URL
+                    if (originalUrl.startsWith('http://') || originalUrl.startsWith('https://')) {
+                        // Split URL into parts and insert prefix
+                        const urlParts = originalUrl.split('//');
+                        processedUrl = urlParts[0] + '//' + URL_PREFIX + urlParts[1];
+                    } else {
+                        // If no protocol, just add prefix
+                        processedUrl = 'https://' + URL_PREFIX + originalUrl;
+                    }
+                }
+                
+                // Update UI with result
+                resultUrlInput.value = processedUrl;
+                openLink.href = processedUrl;
+                resultArea.classList.remove('hidden');
+                
+                // Scroll to result area
+                resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                showNotification('链接生成成功', 'success');
+            } catch (error) {
+                showNotification('无效的URL格式', 'error');
+                console.error('URL validation error:', error);
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Set message
+            notificationText.textContent = message;
+            
+            // Set icon and color based on type
+            notificationIcon.className = '';
+            
+            switch (type) {
+                case 'success':
+                    notificationIcon.classList.add('fa', 'fa-check-circle', 'mr-2', 'text-green-500');
+                    break;
+                case 'error':
+                    notificationIcon.classList.add('fa', 'fa-exclamation-circle', 'mr-2', 'text-red-500');
+                    break;
+                case 'warning':
+                    notificationIcon.classList.add('fa', 'fa-exclamation-triangle', 'mr-2', 'text-yellow-500');
+                    break;
+                default:
+                    notificationIcon.classList.add('fa', 'fa-info-circle', 'mr-2', 'text-blue-500');
+            }
+            
+            // Show notification
+            notification.classList.add('show');
+            
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
